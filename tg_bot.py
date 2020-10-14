@@ -2,6 +2,7 @@ import re
 import os
 import random
 
+import redis
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
@@ -23,6 +24,15 @@ def get_questions():
     return questions
 
 
+def get_redis_connect():
+    """Возвращаем подключение к редису."""
+    host = os.getenv('REDIS_HOST')
+    port = os.getenv('REDIS_PORT')
+    password = os.getenv('REDIS_PASSWORD')
+
+    return redis.Redis(host=host, port=port, db=0, password=password)
+
+
 def start(bot, update):
     """Отправка сообщения на комманду /start."""
     update.message.reply_text('Hi!')
@@ -34,13 +44,19 @@ def text(bot, update):
     custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счет']]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
+    user_id = update.effective_user.id
+
     if update.message.text == 'Новый вопрос':
         message = random.choice(list(questions))
-
+        r.set(user_id, message)
+    else:
+        question = r.get(user_id)
+        question = question.decode('utf-8')
+        message = questions.get(question)
     update.message.reply_text(message, reply_markup=reply_markup)
 
 
-def main():
+def start_telegram_bot():
     """Основная функция."""
 
     quiz_telegram_bot_token = os.getenv('QUIZ_TELEGRAM_BOT_TOKEN')
@@ -57,4 +73,6 @@ def main():
 if __name__ == '__main__':
     questions = get_questions()
 
-    main()
+    r = get_redis_connect()
+
+    start_telegram_bot()
