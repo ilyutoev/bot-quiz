@@ -1,6 +1,7 @@
 import re
 import os
 
+from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 
@@ -28,7 +29,11 @@ def start(bot, update):
 
 def echo(bot, update):
     """Отвечаем пользователю его же сообщением."""
-    update.message.reply_text(update.message.text)
+
+    custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счет']]
+    reply_markup = ReplyKeyboardMarkup(custom_keyboard)
+
+    update.message.reply_text(update.message.text, reply_markup=reply_markup)
 
 
 def main():
