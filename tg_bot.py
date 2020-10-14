@@ -1,5 +1,6 @@
 import re
 import os
+import random
 
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
@@ -27,24 +28,26 @@ def start(bot, update):
     update.message.reply_text('Hi!')
 
 
-def echo(bot, update):
-    """Отвечаем пользователю его же сообщением."""
+def text(bot, update):
+    """Отвечаем на пользовательские сообщения."""
 
     custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счет']]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
-    update.message.reply_text(update.message.text, reply_markup=reply_markup)
+    if update.message.text == 'Новый вопрос':
+        message = random.choice(list(questions))
+
+    update.message.reply_text(message, reply_markup=reply_markup)
 
 
 def main():
     """Основная функция."""
-    questions = get_questions()
 
     quiz_telegram_bot_token = os.getenv('QUIZ_TELEGRAM_BOT_TOKEN')
     updater = Updater(token=quiz_telegram_bot_token)
 
     start_handler = CommandHandler('start', start)
-    text_handler = MessageHandler(Filters.text, echo)
+    text_handler = MessageHandler(Filters.text, text)
 
     updater.dispatcher.add_handler(start_handler)
     updater.dispatcher.add_handler(text_handler)
@@ -52,4 +55,6 @@ def main():
 
 
 if __name__ == '__main__':
+    questions = get_questions()
+
     main()
