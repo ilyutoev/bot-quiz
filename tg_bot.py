@@ -45,14 +45,20 @@ def text(bot, update):
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
     user_id = update.effective_user.id
-
-    if update.message.text == 'Новый вопрос':
+    user_message = update.message.text
+    if user_message == 'Новый вопрос':
         message = random.choice(list(questions))
         r.set(user_id, message)
     else:
         question = r.get(user_id)
         question = question.decode('utf-8')
-        message = questions.get(question)
+        full_answer = questions.get(question)
+        short_answer = full_answer.split('.')[0].split('(')[0]
+
+        if user_message.lower() == short_answer.lower():
+            message = "Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»"
+        else:
+            message = "Неправильно... Попробуешь ещё раз?"
     update.message.reply_text(message, reply_markup=reply_markup)
 
 
