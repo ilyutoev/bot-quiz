@@ -57,17 +57,24 @@ def start(bot, update):
     return State.QUESTION
 
 
-def handle_new_question_request(bot, update):
+def handle_new_question_request(bot, update, user_data):
     """Обрабатываем запрос на отправку нового вопроса."""
     user_id = f'tg-{update.effective_user.id}'
     message = random.choice(list(questions))
     r.set(user_id, message)
     update.message.reply_text(message)
 
+    if 'question' in user_data:
+        user_data['question'] += 1
+    else:
+        user_data['question'] = 1
+
+    print(user_data)
+
     return State.ANSWER
 
 
-def handle_solution_attempt(bot, update):
+def handle_solution_attempt(bot, update, user_data):
     """Обработка ответа на вопрос."""
 
     user_id = f'tg-{update.effective_user.id}'
@@ -81,6 +88,10 @@ def handle_solution_attempt(bot, update):
     if user_message.lower() == short_answer.lower():
         message = "Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»"
         state = State.QUESTION
+        if 'answer' in user_data:
+            user_data['answer'] += 1
+        else:
+            user_data['answer'] = 1
     else:
         message = "Неправильно... Попробуешь ещё раз?"
         state = State.ANSWER
@@ -90,7 +101,7 @@ def handle_solution_attempt(bot, update):
     return state
 
 
-def handle_give_up(bot, update):
+def handle_give_up(bot, update, user_data):
     """Кнопка сдаться. Печатаем ответ на вопрос и присылаем следующий вопрос."""
     user_id = f'tg-{update.effective_user.id}'
 
@@ -98,9 +109,18 @@ def handle_give_up(bot, update):
     question = question.decode('utf-8')
     full_answer = questions.get(question)
 
-    update.message.reply_text(full_answer)
+    update.message.reply_text(f'Ответ: {full_answer}')
 
-    return handle_new_question_request(bot, update)
+    return handle_new_question_request(bot, update, user_data)
+
+
+def handle_my_score_request(bot, update, user_data):
+    """Кнопка Мой счет. Печатаем количество заданных вопросов и правильных ответов."""
+
+    message = f'Задано вопросов: {user_data.get("question", 0)}, верных ответов: {user_data.get("answer", 0)}.'
+
+    update.message.reply_text(message)
+    return State.ANSWER
 
 
 def cancel(bot, update):
@@ -122,12 +142,15 @@ def start_telegram_bot():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            State.QUESTION: [RegexHandler(f'^({Button.QUESTION.value})$', handle_new_question_request)],
+            State.QUESTION: [
+                RegexHandler(f'^({Button.QUESTION.value})$', handle_new_question_request, pass_user_data=True)
+            ],
 
             State.ANSWER: [
-                RegexHandler(f'^({Button.GIVE_UP.value})$', handle_give_up),
-                RegexHandler(f'^({Button.QUESTION.value})$', handle_new_question_request),
-                MessageHandler(Filters.text, handle_solution_attempt)
+                RegexHandler(f'^({Button.GIVE_UP.value})$', handle_give_up, pass_user_data=True),
+                RegexHandler(f'^({Button.QUESTION.value})$', handle_new_question_request, pass_user_data=True),
+                RegexHandler(f'^({Button.MY_SCORE.value})$', handle_my_score_request, pass_user_data=True),
+                MessageHandler(Filters.text, handle_solution_attempt, pass_user_data=True)
             ],
         },
 
