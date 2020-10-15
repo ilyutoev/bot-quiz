@@ -1,49 +1,18 @@
-import re
 import os
 import random
 from enum import Enum
 
-import redis
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
+
+from redis_handlers import get_redis_connect
+from utils import Button, get_questions
 
 
 class State(Enum):
     QUESTION = 1
     ANSWER = 2
     GIVE_UP = 3
-
-
-class Button(Enum):
-    QUESTION = 'Новый вопрос'
-    GIVE_UP = 'Сдаться'
-    MY_SCORE = 'Мой счет'
-
-
-def get_questions():
-    """Открываем файл с вопросами и возвращаем словарь вопрос: ответ."""
-    with open('questions.txt', 'r', encoding='KOI8-R') as f:
-        questions_str = f.read()
-
-    questions = {}
-    question = ''
-    for line in questions_str.split('\n\n'):
-        if 'Вопрос' in line:
-            question = re.sub(r'Вопрос .+:?\n', '', line).replace('\n', ' ').strip()
-        if 'Ответ' in line:
-            answer = line.replace('Ответ:', '').replace('\n', ' ').strip()
-            questions[question] = answer
-
-    return questions
-
-
-def get_redis_connect():
-    """Возвращаем подключение к редису."""
-    host = os.getenv('REDIS_HOST')
-    port = os.getenv('REDIS_PORT')
-    password = os.getenv('REDIS_PASSWORD')
-
-    return redis.Redis(host=host, port=port, db=0, password=password)
 
 
 def start(bot, update):
