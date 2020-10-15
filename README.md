@@ -21,6 +21,8 @@ pip install -r requirements.txt
 - `REDIS_HOST` - хост для Redis
 - `REDIS_PORT` - порт для Redis
 - `REDIS_PASSWORD` - пароль для Redis
+- `NOTIFICATION_TELEGRAM_TOKEN` - токен для бота телеграм для отправки уведомелний администратору
+- `NOTIFICATION_TELEGRAM_CHAT_ID` - id чата в телеграмме с администратором для отправки уведомелний
 
 Также необходимо создать подключение к Redis на [сайте](https://redislabs.com/).
 
