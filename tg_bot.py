@@ -69,8 +69,6 @@ def handle_new_question_request(bot, update, user_data):
     else:
         user_data['question'] = 1
 
-    print(user_data)
-
     return State.ANSWER
 
 
