@@ -1,5 +1,6 @@
 import os
 import random
+import logging
 from enum import Enum
 
 from telegram import ReplyKeyboardMarkup
@@ -7,6 +8,9 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Conve
 
 from redis_handlers import get_redis_connect
 from utils import Button, get_questions
+from log_handlers import LogsToTelegramHandler
+
+logger = logging.getLogger(__name__)
 
 
 class State(Enum):
@@ -130,6 +134,13 @@ def start_telegram_bot():
 
 
 if __name__ == '__main__':
+    notification_telegram_token = os.getenv("NOTIFICATION_TELEGRAM_TOKEN")
+    notification_chat_id = os.getenv("NOTIFICATION_TELEGRAM_CHAT_ID")
+    logger.setLevel(logging.INFO)
+    logger.addHandler(LogsToTelegramHandler(notification_telegram_token, notification_chat_id))
+
+    logger.info('Telegram support bot started.')
+
     questions = get_questions()
 
     r = get_redis_connect()

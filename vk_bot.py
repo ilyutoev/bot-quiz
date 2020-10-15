@@ -1,5 +1,6 @@
 import os
 import random
+import logging
 
 import vk_api
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
@@ -7,6 +8,9 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 
 from redis_handlers import get_redis_connect
 from utils import Button, get_questions
+from log_handlers import LogsToTelegramHandler
+
+logger = logging.getLogger(__name__)
 
 
 def get_keyboard():
@@ -104,6 +108,13 @@ def handle_my_score_request(event, vk_api):
 
 
 if __name__ == "__main__":
+    notification_telegram_token = os.getenv("NOTIFICATION_TELEGRAM_TOKEN")
+    notification_chat_id = os.getenv("NOTIFICATION_TELEGRAM_CHAT_ID")
+    logger.setLevel(logging.INFO)
+    logger.addHandler(LogsToTelegramHandler(notification_telegram_token, notification_chat_id))
+
+    logger.info('VKontkte support bot started.')
+
     questions = get_questions()
 
     r = get_redis_connect()
