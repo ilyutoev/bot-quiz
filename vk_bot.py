@@ -113,7 +113,7 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
     logger.addHandler(LogsToTelegramHandler(notification_telegram_token, notification_chat_id))
 
-    logger.info('VKontkte support bot started.')
+    logger.info('VKontkte quiz bot started.')
 
     questions = get_questions()
 
