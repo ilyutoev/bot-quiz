@@ -11,6 +11,13 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Conve
 class State(Enum):
     QUESTION = 1
     ANSWER = 2
+    GIVE_UP = 3
+
+
+class Button(Enum):
+    QUESTION = 'Новый вопрос'
+    GIVE_UP = 'Сдаться'
+    MY_SCORE = 'Мой счет'
 
 
 def get_questions():
@@ -41,7 +48,8 @@ def get_redis_connect():
 
 def start(bot, update):
     """Отправка сообщения на комманду /start."""
-    custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счет']]
+    custom_keyboard = [[Button.QUESTION.value, Button.GIVE_UP.value], [Button.MY_SCORE.value]]
+
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
     update.message.reply_text('Привет!', reply_markup=reply_markup)
@@ -82,6 +90,19 @@ def handle_solution_attempt(bot, update):
     return state
 
 
+def handle_give_up(bot, update):
+    """Кнопка сдаться. Печатаем ответ на вопрос и присылаем следующий вопрос."""
+    user_id = f'tg-{update.effective_user.id}'
+
+    question = r.get(user_id)
+    question = question.decode('utf-8')
+    full_answer = questions.get(question)
+
+    update.message.reply_text(full_answer)
+
+    return handle_new_question_request(bot, update)
+
+
 def cancel(bot, update):
     """Хендлер заглушка для отмены диалога."""
     update.message.reply_text('Спасибо за участие в викторине.')
@@ -101,10 +122,13 @@ def start_telegram_bot():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            State.QUESTION: [RegexHandler('^(Новый вопрос)$', handle_new_question_request)],
+            State.QUESTION: [RegexHandler(f'^({Button.QUESTION.value})$', handle_new_question_request)],
 
-            State.ANSWER: [MessageHandler(Filters.text, handle_solution_attempt)],
-
+            State.ANSWER: [
+                RegexHandler(f'^({Button.GIVE_UP.value})$', handle_give_up),
+                RegexHandler(f'^({Button.QUESTION.value})$', handle_new_question_request),
+                MessageHandler(Filters.text, handle_solution_attempt)
+            ],
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
