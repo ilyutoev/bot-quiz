@@ -1,10 +1,16 @@
 import re
 import os
 import random
+from enum import Enum
 
 import redis
 from telegram import ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
+
+
+class State(Enum):
+    QUESTION = 1
+    ANSWER = 2
 
 
 def get_questions():
@@ -35,31 +41,52 @@ def get_redis_connect():
 
 def start(bot, update):
     """Отправка сообщения на комманду /start."""
-    update.message.reply_text('Hi!')
-
-
-def text(bot, update):
-    """Отвечаем на пользовательские сообщения."""
-
     custom_keyboard = [['Новый вопрос', 'Сдаться'], ['Мой счет']]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
-    user_id = update.effective_user.id
-    user_message = update.message.text
-    if user_message == 'Новый вопрос':
-        message = random.choice(list(questions))
-        r.set(user_id, message)
-    else:
-        question = r.get(user_id)
-        question = question.decode('utf-8')
-        full_answer = questions.get(question)
-        short_answer = full_answer.split('.')[0].split('(')[0]
+    update.message.reply_text('Привет!', reply_markup=reply_markup)
 
-        if user_message.lower() == short_answer.lower():
-            message = "Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»"
-        else:
-            message = "Неправильно... Попробуешь ещё раз?"
-    update.message.reply_text(message, reply_markup=reply_markup)
+    return State.QUESTION
+
+
+def handle_new_question_request(bot, update):
+    """Обрабатываем запрос на отправку нового вопроса."""
+    user_id = f'tg-{update.effective_user.id}'
+    message = random.choice(list(questions))
+    r.set(user_id, message)
+    update.message.reply_text(message)
+
+    return State.ANSWER
+
+
+def handle_solution_attempt(bot, update):
+    """Обработка ответа на вопрос."""
+
+    user_id = f'tg-{update.effective_user.id}'
+    user_message = update.message.text
+
+    question = r.get(user_id)
+    question = question.decode('utf-8')
+    full_answer = questions.get(question)
+    short_answer = full_answer.split('.')[0].split('(')[0]
+
+    if user_message.lower() == short_answer.lower():
+        message = "Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»"
+        state = State.QUESTION
+    else:
+        message = "Неправильно... Попробуешь ещё раз?"
+        state = State.ANSWER
+
+    update.message.reply_text(message)
+
+    return state
+
+
+def cancel(bot, update):
+    """Хендлер заглушка для отмены диалога."""
+    update.message.reply_text('Спасибо за участие в викторине.')
+
+    return ConversationHandler.END
 
 
 def start_telegram_bot():
@@ -68,11 +95,23 @@ def start_telegram_bot():
     quiz_telegram_bot_token = os.getenv('QUIZ_TELEGRAM_BOT_TOKEN')
     updater = Updater(token=quiz_telegram_bot_token)
 
-    start_handler = CommandHandler('start', start)
-    text_handler = MessageHandler(Filters.text, text)
+    dp = updater.dispatcher
 
-    updater.dispatcher.add_handler(start_handler)
-    updater.dispatcher.add_handler(text_handler)
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+
+        states={
+            State.QUESTION: [RegexHandler('^(Новый вопрос)$', handle_new_question_request)],
+
+            State.ANSWER: [MessageHandler(Filters.text, handle_solution_attempt)],
+
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel)]
+    )
+
+    dp.add_handler(conv_handler)
+
     updater.start_polling()
 
 
