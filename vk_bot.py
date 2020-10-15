@@ -2,14 +2,30 @@ import os
 import random
 
 import vk_api
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.longpoll import VkLongPoll, VkEventType
 
 
+def get_keyboard():
+    """Настраиваем и возвращаем кнопки для чата."""
+    keyboard = VkKeyboard()
+
+    keyboard.add_button('Новый вопрос', color=VkKeyboardColor.POSITIVE)
+    keyboard.add_button('Сдаться', color=VkKeyboardColor.NEGATIVE)
+
+    keyboard.add_line()
+    keyboard.add_button('Мой счет', color=VkKeyboardColor.SECONDARY)
+
+    return keyboard
+
+
 def echo(event, vk_api):
+    keyboard = get_keyboard()
     vk_api.messages.send(
         user_id=event.user_id,
         message=event.text,
-        random_id=random.randint(1,1000)
+        random_id=random.randint(1, 1000),
+        keyboard=keyboard.get_keyboard(),
     )
 
 
