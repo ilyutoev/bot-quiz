@@ -7,7 +7,7 @@ from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
 
 from redis_handlers import get_redis_connect
-from utils import Button, get_questions_from_koi8r_file
+from utils import Button, get_questions_from_quiz_koi8r_format_file
 from log_handlers import LogsToTelegramHandler
 
 logger = logging.getLogger(__name__)
@@ -141,7 +141,7 @@ if __name__ == '__main__':
 
     logger.info('Telegram quiz bot started.')
 
-    questions = get_questions_from_koi8r_file()
+    questions = get_questions_from_quiz_koi8r_format_file()
 
     r = get_redis_connect()
 
