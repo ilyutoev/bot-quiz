@@ -124,12 +124,12 @@ if __name__ == "__main__":
     vk_api = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
     for event in longpoll.listen():
-        if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-            if event.text == Button.QUESTION.value:
-                handle_new_question_request(event, vk_api)
-            elif event.text == Button.GIVE_UP.value:
-                handle_give_up(event, vk_api)
-            elif event.text == Button.MY_SCORE.value:
-                handle_my_score_request(event, vk_api)
-            else:
-                handle_solution_attempt(event, vk_api)
+        if not(event.type == VkEventType.MESSAGE_NEW and event.to_me):
+            continue
+        if event.text == Button.QUESTION.value:
+            handle_new_question_request(event, vk_api)
+        elif event.text == Button.GIVE_UP.value:
+            handle_give_up(event, vk_api)
+        elif event.text == Button.MY_SCORE.value:
+            handle_my_score_request(event, vk_api)
+        handle_solution_attempt(event, vk_api)
