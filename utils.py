@@ -8,8 +8,8 @@ class Button(Enum):
     MY_SCORE = 'Мой счет'
 
 
-def get_questions():
-    """Открываем файл с вопросами и возвращаем словарь вопрос: ответ."""
+def get_questions_from_koi8r_file():
+    """Открываем файл (в кодировке KOI8-R) с вопросами и возвращаем словарь вопрос: ответ."""
     with open('questions.txt', 'r', encoding='KOI8-R') as f:
         questions_str = f.read()
 

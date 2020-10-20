@@ -7,7 +7,7 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.longpoll import VkLongPoll, VkEventType
 
 from redis_handlers import get_redis_connect
-from utils import Button, get_questions
+from utils import Button, get_questions_from_koi8r_file
 from log_handlers import LogsToTelegramHandler
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
     logger.info('VKontkte quiz bot started.')
 
-    questions = get_questions()
+    questions = get_questions_from_koi8r_file()
 
     r = get_redis_connect()
 
